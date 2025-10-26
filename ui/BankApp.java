@@ -154,37 +154,98 @@ public class BankApp extends JFrame {
             refreshAccounts();
         });
 
-        depositBtn.addActionListener(e -> {
-            String acc = accField.getText().trim();
-            double amt = parseAmountOrZero();
-            if (acc.isEmpty() || amt <= 0) { appendConsole("⚠️ Enter valid account & amount."); return; }
-            manager.deposit(acc, amt);
-            appendConsole("💰 Deposited ₹" + df.format(amt) + " to " + acc);
-            refreshPending();
-            refreshAccounts();
-        });
+      depositBtn.addActionListener(e -> {
+    String acc = accField.getText().trim();
+    String amtText = amtField.getText().trim();
 
+    if (acc.isEmpty()) {
+        appendConsole("⚠️ Enter a valid account number.");
+        return;
+    }
+
+    try {
+        double amt = Double.parseDouble(amtText); // parse numeric input
+
+        Account account = manager.findAccount(acc); // find account
+        if (account == null) {
+            appendConsole("❌ Deposit failed: Account " + acc + " does not exist!");
+            return;
+        }
+
+        account.deposit(amt); // throws IllegalArgumentException if <= 0
+        appendConsole("💰 Deposited ₹" + df.format(amt) + " to " + acc); // only print if successful
+
+    } catch (NumberFormatException ex) {
+        appendConsole("⚠️ Invalid amount format."); // letters, empty
+    } catch (IllegalArgumentException ex) {
+        appendConsole("❌ Deposit failed: " + ex.getMessage()); // negative or zero
+    }
+
+    refreshPending();
+    refreshAccounts();
+});
 withdrawBtn.addActionListener(e -> {
     String acc = accField.getText().trim();
-    double amt = parseAmountOrZero();
-    if (acc.isEmpty() || amt <= 0) { 
-        appendConsole("⚠️ Enter valid account & amount."); 
-        return; 
+    String amtText = amtField.getText().trim();
+
+    if (acc.isEmpty()) {
+        appendConsole("⚠️ Enter a valid account number.");
+        return;
     }
-    boolean success = manager.withdraw(acc, amt);
-    if(success) appendConsole("💸 Withdrew ₹" + df.format(amt) + " from " + acc);
-    else appendConsole("⚠️ Withdrawal failed: insufficient balance!");
+
+    try {
+        double amt = Double.parseDouble(amtText);
+        Account account = manager.findAccount(acc);
+
+        if (account == null) {
+            appendConsole("❌ Withdrawal failed: Account " + acc + " does not exist!");
+            return;
+        }
+
+        boolean success = account.withdraw(amt); // handles negative/insufficient internally
+        if (success) {
+            appendConsole("💸 Withdrew ₹" + df.format(amt) + " from " + acc);
+        }
+
+    } catch (NumberFormatException ex) {
+        appendConsole("⚠️ Invalid amount format.");
+    } catch (IllegalArgumentException ex) {
+        appendConsole("❌ Withdrawal failed: " + ex.getMessage());
+    }
+
     refreshPending();
     refreshAccounts();
 });
 
+
+
+
+
+
+    
+
         undoBtn.addActionListener(e -> {
-            String acc = accField.getText().trim();
-            if (acc.isEmpty()) { appendConsole("⚠️ Enter account number."); return; }
-            manager.undo(acc);
-            refreshPending();
-            refreshAccounts();
-        });
+    String acc = accField.getText().trim();
+    if (acc.isEmpty()) { appendConsole("⚠️ Enter account number."); return; }
+
+    try {
+        Account account = manager.findAccount(acc);
+        if (account == null) {
+            appendConsole("❌ Account " + acc + " does not exist!");
+            return;
+        }
+
+        account.undo();  // throws IllegalStateException if no transaction
+        appendConsole("⏪ Last transaction undone for " + acc);
+
+    } catch (IllegalStateException ex) {
+        appendConsole("⚠️ Undo failed: " + ex.getMessage());
+    }
+    
+    refreshPending();
+    refreshAccounts();
+});
+
 
         showQueueBtn.addActionListener(e -> {
             String acc = accField.getText().trim();
@@ -251,3 +312,4 @@ withdrawBtn.addActionListener(e -> {
         SwingUtilities.invokeLater(BankApp::new);
     }
 }
+
