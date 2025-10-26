@@ -32,21 +32,22 @@ public class BankManager {
     }
 
     // Deposit amount
-    public void deposit(String accNum, double amount) {
-        Account acc = findAccount(accNum);
-        if(acc != null) {
-            acc.deposit(amount);
-        }
+public void deposit(String accNum, double amount) throws IllegalArgumentException {
+    Account acc = findAccount(accNum);
+    if (acc == null) {
+        throw new IllegalArgumentException("Account " + accNum + " does not exist!");
     }
+    acc.deposit(amount); // may throw IllegalArgumentException from Account
+}
+    //withdraw
+public boolean withdraw(String accNum, double amount) throws IllegalArgumentException {
+    Account acc = findAccount(accNum);
+    if (acc == null) {
+        throw new IllegalArgumentException("Account " + accNum + " does not exist!");
+    }
+    return acc.withdraw(amount); // may throw IllegalArgumentException from Account
+}
 
-    // Withdraw amount, return true if success
-    public boolean withdraw(String accNum, double amount) {
-        Account acc = findAccount(accNum);
-        if(acc != null) {
-            return acc.withdraw(amount);
-        }
-        return false;
-    }
 
     // Undo last transaction for account
     public void undo(String accNum) {
@@ -98,10 +99,11 @@ public class BankManager {
     }
 
     // Find account by account number
-    private Account findAccount(String accNum) {
+    public Account findAccount(String accNum) {
         for(Account acc : accounts) {
             if(acc.getAccountNumber().equals(accNum)) return acc;
         }
         return null;
     }
 }
+
